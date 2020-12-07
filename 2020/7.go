@@ -70,14 +70,10 @@ func bagContainsColor(bag Bag, color string, bagMap map[string]Bag) bool {
 	return false
 }
 
-// WIP
 func countBags(bag Bag, bagMap map[string]Bag) int {
 	count := 0
-	if len(bag.bags) == 0 {
-		return 1
-	}
 	for _, subBag := range bag.bags {
-		count = count + countBags()
+		count = count + (countBags(bagMap[subBag.color], bagMap)+1) * subBag.count
 	}
 
 	return count
@@ -95,7 +91,8 @@ func a(input []string) {
 }
 
 func b(input []string) {
-
+	bagMap := buildBagMap(input)
+	log.Println(countBags(bagMap["shiny gold"], bagMap))
 }
 
 func main() {
