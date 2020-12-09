@@ -1,20 +1,30 @@
 package main
 
 import (
-	"log"
-	"strings"
-	"strconv"
+	"errors"
 	"io/ioutil"
+	"log"
+	"strconv"
+	"strings"
 )
 
-func a(input []string) {
+func runProgram(input []string) (int, bool, error) {
+	var err error
+	loop := false
 	acc := 0
 	op := 0
 	visited := make(map[int]bool)
 	for {
 		if visited[op] {
-			log.Println(acc)
-			return
+			loop = true
+			break
+		}
+		if op >= len(input) {
+			break
+		}
+		if op > len(input) || op < 0 {
+			err = errors.New("array index out of bounds")
+			break
 		}
 		visited[op] = true
 		parts := strings.Split(input[op], " ")
@@ -23,7 +33,6 @@ func a(input []string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Println(op, cmd, num)
 		switch cmd {
 		case "acc":
 			acc = acc + num
@@ -37,10 +46,33 @@ func a(input []string) {
 			break
 		}
 	}
+	return acc, loop, err
+}
+
+func a(input []string) {
+	acc, _, _ := runProgram(input)
+	log.Println(acc)
 }
 
 func b(input []string) {
-
+	for i := 0; i < len(input); i++ {
+		dst := make([]string, len(input))
+		copy(dst, input)
+		if strings.HasPrefix(dst[i], "jmp") {
+			dst[i] = strings.Replace(dst[i], "jmp", "nop", -1)
+		} else if strings.HasPrefix(dst[i], "nop") {
+			dst[i] = strings.Replace(dst[i], "nop", "jmp", -1)
+		}
+		acc, loop, err := runProgram(dst)
+		if err != nil {
+		    log.Fatalln(err)
+		}
+		if !loop {
+			log.Println(acc)
+			return
+		}
+	}
+	log.Println("no match")
 }
 
 func main() {
