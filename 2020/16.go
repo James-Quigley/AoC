@@ -44,16 +44,22 @@ func a(input []string) {
 			x, _ := strconv.Atoi(v)
 			nums[i] = x
 		}
+		// valid := false
+		// isTicketValid := true
 		valid := true
 		for _, x := range nums {
+			numValid := false
 			invalid := true
 			for _, rule := range rules {
-				if (x >= rule.X1 && x <= rule.X2) || (x >= rule.X3 && x <= rule.X4) {
+				if doesFieldMatchRule(x, rule) {
 					invalid = false
+					numValid = true
+					// valid = true
 					break
-				} else {
-					valid = false
 				}
+			}
+			if !numValid {
+				valid = false
 			}
 			if invalid {
 				tser = tser + x
@@ -98,60 +104,47 @@ func b(input []string, rules []Rule, validTickets [][]int) {
 		x, _ := strconv.Atoi(v)
 		myTicketInts[i] = x
 	}
-	validTickets = append(validTickets, myTicketInts)
-
 	m := make(map[string][]int)
 	for _, rule := range rules {
-		log.Println("finding matches for rule", rule)
 		m[rule.Field] = make([]int, 0)
 		for j := 0; j < len(rules); j++ {
 			valid := true
 			for _, ticket := range validTickets {
 				if !doesFieldMatchRule(ticket[j], rule) {
-					log.Println("ticket", ticket, "doesn't match rule for index", j)
 					valid = false
 					break
 				}
 			}
 			if valid {
-				log.Println("valid", rule, j)
 				m[rule.Field] = append(m[rule.Field], j)
 			}
 		}
 	}
 	fixed := make(map[string]int)
 	for len(fixed) < len(m) {
-		log.Println("rule map")
-		log.Println(m)
-		log.Println(len(m))
-		log.Println("fixed")
-		log.Println(fixed)
-		log.Println(len(fixed))
 		for k, v := range m {
 			if _, exists := fixed[k]; !exists {
 				if len(v) == 1 {
 					fixed[k] = v[0]
 					for k2, v2 := range m {
 						if k != k2 {
-							log.Println("removing", v[0], "from", k2, v2)
 							m[k2] = deleteItem(v2, v[0])
-							log.Println(m[k2])
 						}
 					}
-					delete(m, k)
+					// delete(m, k)
 				}
 			}
 		}
 	}
-	// total := 1
 
-	// // for i, rule := range orderedRules {
-	// // 	log.Println(rule.Field)
-	// // 	if strings.HasPrefix(rule.Field, "departure") {
-	// // 		total = total * myTicketInts[i]
-	// // 	}
-	// // }
-	// log.Println(total)
+	total := 1
+
+	for k, v := range fixed {
+		if strings.HasPrefix(k, "departure") {
+			total = total * myTicketInts[v]
+		}
+	}
+	log.Println(total)
 }
 
 func main() {
