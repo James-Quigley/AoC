@@ -88,6 +88,47 @@ func doMath(line string) int {
 	return final
 }
 
+func doMathB(line string) int {
+	line = strings.ReplaceAll(line, " ", "")
+
+	for i := strings.Index(line, "("); i != -1; i = strings.Index(line, "(") {
+		parenCount := 1
+		parenIdx := i
+		for j := i + 1; j < len(line); j++ {
+			if line[j] == '(' {
+				parenCount++
+				continue
+			}
+			if line[j] == ')' {
+				parenCount--
+				if parenCount == 0 {
+					result := strconv.Itoa(doMathB(line[parenIdx+1 : j]))
+					line = line[:parenIdx] + result + line[j+1:]
+					break
+				}
+			}
+		}
+	}
+
+	multis := strings.Split(line, "*")
+	for i, s := range multis {
+		adds := strings.Split(s, "+")
+		sum := 0
+		for _, n := range adds {
+			x, _ := strconv.Atoi(n)
+			sum = sum + x
+		}
+		multis[i] = strconv.Itoa(sum)
+	}
+
+	total := 1
+	for _, s := range multis {
+		x, _ := strconv.Atoi(s)
+		total = total * x
+	}
+	return total
+}
+
 func a(input []string) {
 	total := 0
 	for _, line := range input {
@@ -97,6 +138,11 @@ func a(input []string) {
 }
 
 func b(input []string) {
+	total := 0
+	for _, line := range input {
+		total = total + doMathB(line)
+	}
+	log.Println(total)
 }
 
 func main() {
