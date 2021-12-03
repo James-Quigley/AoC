@@ -1,29 +1,37 @@
 import * as R from "ramda";
 
-const charsAtIndexOrderedByFrequency = (
-  arr: string[],
-  i: number
-): [string, number][] => {
-  // @ts-ignore
+const charsAtIndexOrderedByFrequency = R.curry(
+  (arr: string[], i: number): [string, number][] => {
+    // @ts-ignore
+    return R.pipe(
+      R.map(R.nth(i)),
+      R.countBy(R.identity as (i: string) => string),
+      R.toPairs,
+      // @ts-ignore
+      R.sort(R.descend(R.nth(1)))
+    )(arr);
+  }
+);
+
+const stringFromNthMostCommonCharAtIndex = (arr: string[], i: number) => {
+  const fn = charsAtIndexOrderedByFrequency(arr);
   return R.pipe(
+    R.head,
+    R.length,
+    R.times(R.identity),
+    R.map(fn),
     R.map(R.nth(i)),
-    // @ts-ignore
-    R.countBy(R.identity),
-    R.toPairs,
-    // @ts-ignore
-    R.sort(R.descend(R.nth(1)))
+    R.map(R.nth(0)),
+    R.join("")
   )(arr);
 };
 
 const a = (input: string): string => {
   const lines = input.split("\n");
-  let gamma = "";
-  let epsilon = "";
-  for (let i = 0; i < lines[0].length; i++) {
-    const chars = charsAtIndexOrderedByFrequency(lines, i);
-    gamma += chars[0][0];
-    epsilon += chars[chars.length - 1][0];
-  }
+
+  const gamma = stringFromNthMostCommonCharAtIndex(lines, 0);
+
+  const epsilon = stringFromNthMostCommonCharAtIndex(lines, 1);
 
   return (parseInt(gamma, 2) * parseInt(epsilon, 2)).toString();
 };
