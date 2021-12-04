@@ -1,35 +1,22 @@
 import * as R from "ramda";
 
-const isBoardWinner = (board: string, nums: string[]) => {
-  const rows = board
-    .split("\n")
-    .map((l) => l.split(" ").filter((l) => l != ""));
+const isBoardWinner = (board: string, nums: string[]): boolean => {
+  const rows = board.split("\n").map((l) => l.split(" ").filter(Boolean));
+
+  //   const rows = R.pipe(
+  //     R.split("\n"),
+  //     R.map(R.pipe(R.split(" "), R.filter(Boolean)))
+  //   )(board);
   const columns = R.transpose(rows);
 
-  for (let row of rows) {
-    let win = true;
-    for (let n of row) {
-      if (!nums.includes(n)) {
-        win = false;
-        break;
-      }
-    }
-    if (win) {
-      return true;
-    }
-  }
-  for (let column of columns) {
-    let win = true;
-    for (let n of column) {
-      if (!nums.includes(n)) {
-        win = false;
-        break;
-      }
-    }
-    if (win) {
-      return true;
-    }
-  }
+  const isSetWinner = (set: string[][]): boolean =>
+    R.any(R.pipe(R.all(R.includes(R.__, nums))), set);
+
+  const rowWin: boolean = isSetWinner(rows);
+
+  const colWin: boolean = isSetWinner(columns);
+
+  return rowWin || colWin;
 };
 
 const getUnmarkedNumbers = (board: string, nums: string[]) => {
