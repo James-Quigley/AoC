@@ -2,7 +2,7 @@ import * as R from "ramda";
 import combinate from "combinate";
 
 const letters = ["a", "b", "c", "d", "e", "f", "g"];
-const lettersByNum: {
+const numToLetters: {
   [key: string]: string[];
 } = {
   0: ["a", "b", "c", "e", "f", "g"],
@@ -17,18 +17,11 @@ const lettersByNum: {
   9: ["a", "b", "c", "d", "f", "g"],
 };
 
+const lettersToNum: {
+  [key: string]: string;
+} = R.map(R.nth(0), R.invert(numToLetters));
 // @ts-expect-error idk
-const numbersByLength = R.invert(R.map(R.length, lettersByNum));
-
-const numsByLetter = {
-  a: [0, 2, 3, 5, 6, 7, 8, 9],
-  b: [0, 4, 5, 6, 8, 9],
-  c: [0, 1, 2, 3, 4, 7, 8, 9],
-  d: [2, 3, 4, 5, 6, 8, 9],
-  e: [0, 2, 6, 8],
-  f: [0, 1, 3, 4, 5, 6, 7, 8, 9],
-  g: [0, 2, 3, 5, 6, 8, 9],
-};
+const numbersByLength = R.invert(R.map(R.length, numToLetters));
 
 const startMap: {
   [key: string]: string[];
@@ -42,8 +35,7 @@ const isValidMapping = (
 ) => {
   for (let word of words) {
     const mapped = mapWord(mapping, word);
-    const valid =
-      R.keys(R.filter(R.equals(Array.from(mapped)), lettersByNum)).length == 1;
+    const valid = lettersToNum[mapped.join(",")];
     if (!valid) {
       return false;
     }
@@ -61,7 +53,7 @@ const mapWord = (
   for (let i = 0; i < word.length; i++) {
     newWord += mapping[word[i]];
   }
-  return Array.from(newWord).sort().join("");
+  return Array.from(newWord).sort();
 };
 
 const a = (input: string): string => {
@@ -74,7 +66,7 @@ const a = (input: string): string => {
       const possibilities = numbersByLength[word.length];
       let possibleLetterMappings = [];
       for (let possibility of possibilities) {
-        possibleLetterMappings.push(lettersByNum[possibility]);
+        possibleLetterMappings.push(numToLetters[possibility]);
       }
       possibleLetterMappings = R.uniq(R.flatten(possibleLetterMappings));
       for (let i = 0; i < word.length; i++) {
@@ -100,10 +92,8 @@ const a = (input: string): string => {
 
     for (let word of line[1].split(" ").filter(Boolean)) {
       const mapped = mapWord(mapping, word);
-      const number = R.keys(
-        R.filter(R.equals(Array.from(mapped)), lettersByNum)
-      )[0];
-      if (["1", "4", "7", "8"].includes(number as string)) {
+      const number = lettersToNum[mapped.join(",")];
+      if (["1", "4", "7", "8"].includes(number)) {
         total++;
       }
     }
@@ -121,7 +111,7 @@ const b = (input: string): string => {
       const possibilities = numbersByLength[word.length];
       let possibleLetterMappings = [];
       for (let possibility of possibilities) {
-        possibleLetterMappings.push(lettersByNum[possibility]);
+        possibleLetterMappings.push(numToLetters[possibility]);
       }
       possibleLetterMappings = R.uniq(R.flatten(possibleLetterMappings));
       for (let i = 0; i < word.length; i++) {
@@ -148,9 +138,7 @@ const b = (input: string): string => {
     let num = "";
     for (let word of line[1].split(" ").filter(Boolean)) {
       const mapped = mapWord(mapping, word);
-      const number = R.keys(
-        R.filter(R.equals(Array.from(mapped)), lettersByNum)
-      )[0];
+      const number = lettersToNum[mapped.join(",")];
       num += number;
     }
     total += parseInt(num);
