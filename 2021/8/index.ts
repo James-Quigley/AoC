@@ -62,6 +62,8 @@ const a = (input: string): string => {
   for (let line of lines) {
     const mappingPossibility = R.clone(startMap);
     const onWires = line[0].split(" ").filter(Boolean);
+
+    // Narrow down total possibilities
     for (let word of onWires) {
       const possibilities = numbersByLength[word.length];
       let possibleLetterMappings = [];
