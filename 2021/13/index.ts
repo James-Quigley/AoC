@@ -1,7 +1,5 @@
 import * as R from "ramda";
 
-const mapIndexed = R.addIndex(R.map)
-
 const printGrid = (grid: string[][]) => {
   console.log(R.pipe(
     R.transpose,
@@ -16,10 +14,10 @@ const foldX = (grid: string[][], n: number) => {
 
   const [longer, other] = R.sort(R.descend(R.length), [first, second])
 
-  for (let i = longer.length - 1; i >= 0; i--) {
-    longer[i] = R.zipWith((y, z) => R.any(R.equals("#"), [y, z]) ? "#" : ".", longer[i], other[i] ?? R.repeat(".", longer[i].length))
-  } 
-  return longer
+  other.unshift(...R.repeat(R.repeat(".", longer[0].length), longer.length - other.length))
+  return longer.map((l, i) => 
+    R.zipWith((y, z) => 
+      R.any(R.equals("#"), [y, z]) ? "#" : ".", l, other[i]))
 }
 
 const foldY = (grid: string[][], n: number) => {
@@ -77,8 +75,6 @@ const b = (input: string): string => {
   let grid = parseGrid(lines)
   const folds = foldArr.split("\n")
   for (let fold of folds) {
-    printGrid(grid)
-    console.log("----------------------------------")
     const [axis, num] = fold.split(" ")[2].split("=")
     const n = parseInt(num)
     grid = doFold(grid, n, axis)
