@@ -1,6 +1,6 @@
 import * as R from 'ramda'
 
-import { parseIntegerInput } from '../utils'
+import { parseIntegerInput } from '../../utils'
 
 const mapIncreasingTuples = R.pipe(
     R.map(
