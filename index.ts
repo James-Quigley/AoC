@@ -7,9 +7,9 @@ interface Day {
 
 const args = process.argv.slice(2);
 
-const day: Day = require(`./${args[0]}`).default;
+const day: Day = require(`./${args[0]}/${args[1]}`).default;
 
-const input = readFileSync(`./${args[0]}/${args[1] ?? "input"}.txt`, {
+const input = readFileSync(`./${args[0]}/${args[1]}/${args[2] ?? "input"}.txt`, {
   encoding: "utf-8",
 }).toString();
 
