@@ -1,241 +1,155 @@
 import * as R from "ramda";
 
-interface Node {
-  left: Node | number;
-  right: Node | number;
-  parent: Node | null;
+const addDepth = (el, depth) => {
+  if (typeof el == "number") {
+    return {
+      value: el,
+      depth: depth - 1,
+    };
+  }
+  return [addDepth(el[0], depth + 1), addDepth(el[1], depth + 1)];
+};
+
+interface Element {
+  value: number;
+  depth: number;
 }
 
-const debug = false;
-
-const arrToTree = (arr, parent) => {
-  let node: Node = {
-    left: 0,
-    right: 0,
-    parent,
-  };
-  if (Array.isArray(arr[0])) {
-    node.left = arrToTree(arr[0], node);
-  } else {
-    node.left = arr[0];
-  }
-  if (Array.isArray(arr[1])) {
-    node.right = arrToTree(arr[1], node);
-  } else {
-    node.right = arr[1];
-  }
-  return node;
+const add = (a: Element[], b: Element[]): Element[] => {
+  return a
+    .map((e) => ({
+      ...e,
+      depth: e.depth + 1,
+    }))
+    .concat(
+      b.map((e) => ({
+        ...e,
+        depth: e.depth + 1,
+      }))
+    );
 };
 
-const treeToArr = (el: Node | number) => {
-  if (typeof el == "number") {
-    return el;
-  }
+const explode = (a: Element[]): [Element[], boolean] => {
+  let arr = R.clone(a);
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].depth == 4) {
+      if (!R.isNil(arr[i - 1])) {
+        arr[i - 1].value += arr[i].value;
+      }
+      if (!R.isNil(arr[i + 2])) {
+        arr[i + 2].value += arr[i + 1].value;
+      }
 
-  return [treeToArr(el.left), treeToArr(el.right)];
+      arr[i] = {
+        value: 0,
+        depth: 3,
+      };
+      arr = R.remove(i + 1, 1, arr);
+      return [arr, true];
+    }
+  }
+  return [arr, false];
 };
 
-const addTrees = (left: Node, right: Node): Node => {
-  let node: Node = {
-    left,
-    right,
-    parent: null,
-  };
-  if (typeof node.left != "number") {
-    node.left.parent = node;
+const split = (a: Element[]): [Element[], boolean] => {
+  let arr = R.clone(a);
+  for (let i = 0; i < a.length; i++) {
+    if (arr[i].value >= 10) {
+      const n = arr[i].value;
+      const d = arr[i].depth;
+      arr[i] = {
+        value: Math.floor(n / 2.0),
+        depth: d + 1,
+      };
+      arr = R.insert(
+        i + 1,
+        {
+          value: Math.ceil(n / 2.0),
+          depth: d + 1,
+        },
+        arr
+      );
+      return [arr, true];
+    }
   }
-  if (typeof node.right != "number") {
-    node.right.parent = node;
-  }
-  return node;
+  return [arr, false];
 };
 
-const doExplode = (tree: Node, depth: number): [Node, boolean] => {
-  const nodeChildren = [tree.left, tree.right].filter(
-    (n) => typeof n != "number"
-  ) as Node[];
-  if (depth == 3 && nodeChildren.length) {
-    addToNextLeft(nodeChildren[0], nodeChildren[0].left as number);
-    addToNextRight(nodeChildren[0], nodeChildren[0].right as number);
-    if (typeof tree.left != "number") {
-      tree.left = 0;
-    } else {
-      tree.right = 0;
-    }
-    return [tree, true];
-  }
-
-  if (typeof tree.left != "number") {
-    const [newLeft, didExplode] = doExplode(tree.left, depth + 1);
-    tree.left = newLeft;
-    if (didExplode) {
-      return [tree, true];
-    }
-  }
-
-  if (typeof tree.right != "number") {
-    const [newRight, didExplode] = doExplode(tree.right, depth + 1);
-    tree.right = newRight;
-    if (didExplode) {
-      return [tree, true];
-    }
-  }
-  return [tree, false];
-};
-
-const doSplit = (tree: Node): [Node, boolean] => {
-  if (typeof tree.left == "number" && tree.left >= 10) {
-    const n = tree.left;
-    tree.left = {
-      left: Math.floor(n / 2.0),
-      right: Math.ceil(n / 2.0),
-      parent: tree,
-    };
-    return [tree, true];
-  }
-  if (typeof tree.left != "number") {
-    const [t, didSplit] = doSplit(tree.left);
-    if (didSplit) {
-      tree.left = t;
-      return [tree, true];
-    }
-  }
-  if (typeof tree.right == "number" && tree.right >= 10) {
-    const n = tree.right;
-    tree.right = {
-      left: Math.floor(n / 2.0),
-      right: Math.ceil(n / 2.0),
-      parent: tree,
-    };
-    return [tree, true];
-  }
-  if (typeof tree.right != "number") {
-    const [t, didSplit] = doSplit(tree.right);
-    if (didSplit) {
-      tree.right = t;
-      return [tree, true];
-    }
-  }
-  return [tree, false];
-};
-
-const addToNextLeft = (tree: Node, n: number) => {
-  let current = tree.parent;
-  let prev = tree;
-  while (current) {
-    if (current.left != prev) {
-      break;
-    }
-    prev = current;
-    current = current.parent;
-  }
-  if (!current) {
-    return;
-  }
-
-  prev = current;
-  let side = "left";
-  let thing = current.left;
-  while (typeof thing != "number") {
-    prev = thing;
-    thing = thing.right;
-    side = "right";
-  }
-  prev[side] = thing + n;
-};
-
-const addToNextRight = (tree: Node, n: number) => {
-  let current = tree.parent;
-  let prev = tree;
-  while (current) {
-    if (current.right != prev) {
-      break;
-    }
-    prev = current;
-    current = current.parent;
-  }
-  if (!current) {
-    return;
-  }
-
-  prev = current;
-  let side = "right";
-  let thing = current.right;
-  while (typeof thing != "number") {
-    side = "left";
-    prev = thing;
-    thing = thing.left;
-  }
-  prev[side] = thing + n;
-};
-
-const reduceTree = (tree: Node): Node => {
-  let newTree = tree;
-
+const reduce = (a: Element[]) => {
+  let arr = R.clone(a);
   while (true) {
-    const [t, didExplode] = doExplode(newTree, 0);
-    newTree = t;
-    if (didExplode && debug) {
-      console.log("exploded:", JSON.stringify(treeToArr(newTree)));
+    let [newArr, changed] = explode(arr);
+    if (changed) {
+      arr = newArr;
+      continue;
     }
-    if (!didExplode) {
-      const [t, didSplit] = doSplit(newTree);
-      newTree = t;
-      if (didSplit && debug) {
-        console.log("splitted:", JSON.stringify(treeToArr(newTree)));
-      }
-      if (!didSplit) {
-        break;
-      }
+    [newArr, changed] = split(arr);
+    if (changed) {
+      arr = newArr;
+      continue;
     }
+    break;
   }
-
-  return newTree;
+  return arr;
 };
 
-const magnitude = (el: Node | number): number => {
-  if (typeof el == "number") {
-    return el;
+const magnitude = (a: Element[]): number => {
+  let arr = R.clone(a);
+  for (let i = 4; i >= 0; i--) {
+    let queue = [];
+    let held = null;
+    for (let e of arr) {
+      if (e.depth != i) {
+        queue.push(e);
+        continue;
+      }
+      if (!held) {
+        held = e;
+        continue;
+      }
+      queue.push({
+        value: 3 * held.value + 2 * e.value,
+        depth: i - 1,
+      });
+      held = null;
+    }
+    arr = queue;
   }
-  return 3 * magnitude(el.left) + 2 * magnitude(el.right);
+  return arr[0].value;
 };
 
 const a = (input: string): string => {
   const lines = input.split("\n").map((l) => JSON.parse(l));
-  let tree = arrToTree(lines[0], null);
-  for (let i = 1; i < lines.length; i++) {
-    const lineTree = arrToTree(lines[i], null);
-    tree = addTrees(tree, lineTree);
-    tree = reduceTree(tree);
-  }
+  const withDepth: Element[][] = lines
+    .map((l) => addDepth(l, 0))
+    .map((l) => R.flatten(l));
 
-  console.log(JSON.stringify(treeToArr(tree)));
-
-  return magnitude(tree).toString();
+  const [head, ...rest] = withDepth;
+  const result = rest.reduce((acc, c) => {
+    return reduce(add(acc, c));
+  }, head);
+  return magnitude(result).toString();
 };
 
 const b = (input: string): string => {
-  const trees = input.split("\n").map((l) => arrToTree(JSON.parse(l), null));
-  const reversed = R.clone(trees).reverse();
+  const lines = input.split("\n").map((l) => JSON.parse(l));
+  const withDepth: Element[][] = lines
+    .map((l) => addDepth(l, 0))
+    .map((l) => R.flatten(l));
+  const reversed = R.clone(withDepth).reverse();
 
   let max = 0;
-  for (let i = 0; i < trees.length - 1; i++) {
-    for (let j = i + 1; j < trees.length; j++) {
-      const r = reduceTree(addTrees(trees[i], trees[j]));
-      console.log(JSON.stringify(treeToArr(r)));
-      const m = magnitude(r);
-      if (m > max) {
-        max = m;
-      }
-      const r2 = reduceTree(addTrees(reversed[i], reversed[j]));
-      console.log(JSON.stringify(treeToArr(r2)));
-      const rm = magnitude(r2);
-      if (rm > max) {
-        max = rm;
-      }
+  for (let i = 0; i < withDepth.length - 1; i++) {
+    for (let j = i + 1; j < withDepth.length; j++) {
+      max = Math.max(
+        ...[
+          magnitude(reduce(add(withDepth[i], withDepth[j]))),
+          magnitude(reduce(add(reversed[i], reversed[j]))),
+          max,
+        ]
+      );
     }
   }
-
   return max.toString();
 };
 
