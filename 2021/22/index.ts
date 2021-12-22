@@ -1,19 +1,5 @@
 import * as R from "ramda";
 
-const createCube = (size: number): boolean[][][] => {
-    let cube = []
-    for (let x = 0; x <= size; x++) {
-        cube[x] = []
-        for (let y = 0; y <= size; y++) {
-            cube[x][y] = []
-            for (let z = 0; z <= size; z++) {
-                cube[x][y][z] = false
-            }
-        }
-    }
-    return cube
-}
-
 interface Line {
     on: boolean
     x: [number, number]
@@ -41,26 +27,32 @@ const a = (input: string): string => {
         newL.x = rangeOverlap(l.x, [-50, 50])
         newL.y = rangeOverlap(l.y, [-50, 50])
         newL.z = rangeOverlap(l.z, [-50, 50])
+
         return newL
     }).filter(l => {
         return !(l.x[1] - l.x[0] < 1 || l.y[1] - l.y[0] < 1 || l.z[1] - l.z[0] < 1)
     })
-    let total = BigInt(0)
+    let total = 0
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
         if (!line.on) {
             continue
         }
 
-        total += BigInt(countWhereNoIntersections(line, lines.slice(i+1)))
+        total += countWhereNoIntersections(line, lines.slice(i+1))
     }
     return total.toString()
 };
 
-const rangeOverlap = (a: [number, number], b: [number, number]): [number, number] => [Math.max(a[0], b[0]), Math.min(a[1], b[1])]
+const rangeOverlap = (a: [number, number], b: [number, number]): [number, number] => {
+    if (a[1] <= b[0] || a[0] >= b[1]) {
+        return [0,0]
+    }
+    return [Math.max(a[0], b[0]), Math.min(a[1], b[1])]
+}
 
 const countWhereNoIntersections = (line: Line, rest: Line[]): number => {
-    let total = (line.x[1] - line.x[0]) * (line.y[1] - line.y[0]) * (line.z[1] - line.z[0])
+    let total = (line.x[1] - line.x[0] + 1)  * (line.y[1] - line.y[0] + 1) * (line.z[1] - line.z[0] + 1)
     const conflicts = []
     for (let other of rest) {
         const oX = rangeOverlap(line.x, other.x)
@@ -69,7 +61,13 @@ const countWhereNoIntersections = (line: Line, rest: Line[]): number => {
         if (oX[1] - oX[0] < 1 || oY[1] - oY[0] < 1 || oZ[1] - oZ[0] < 1) {
             continue
         }
-        conflicts.push(other)
+        const overlap = {
+            on: other.on,
+            x: oX,
+            y: oY,
+            z: oZ
+        }
+        conflicts.push(overlap)
     }
     for (let i = 0; i < conflicts.length; i++) {
         const conflictTotal = countWhereNoIntersections(conflicts[i], conflicts.slice(i+1))
