@@ -35,52 +35,61 @@ const parseLine = (line: string): Line => {
 }
 
 const a = (input: string): string => {
-    let cube = createCube(100)
-    for (let line of input.split("\n")) {
-        const {on, x, y, z} = parseLine(line)
-        for (let i = x[0]; i <= x[1]; i++) {
-            if (-50 > i || i > 50) {
-                continue
-            }
-            for (let j = y[0]; j <= y[1]; j++) {
-                if (-50 > j || j > 50) {
-                    continue
-                }
-                for (let k = z[0]; k <= z[1]; k++) {
-                    if (-50 > k || k > 50) {
-                        continue
-                    }
-                    cube[i+50][j+50][k+50] = on
-                }
-            }
+    const lines = input.split("\n").map(parseLine).map(l => {
+        const newL = l
+
+        newL.x = rangeOverlap(l.x, [-50, 50])
+        newL.y = rangeOverlap(l.y, [-50, 50])
+        newL.z = rangeOverlap(l.z, [-50, 50])
+        return newL
+    }).filter(l => {
+        return !(l.x[1] - l.x[0] < 1 || l.y[1] - l.y[0] < 1 || l.z[1] - l.z[0] < 1)
+    })
+    let total = BigInt(0)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        if (!line.on) {
+            continue
         }
+
+        total += BigInt(countWhereNoIntersections(line, lines.slice(i+1)))
     }
-    return R.flatten(cube).filter(Boolean).length.toString()
+    return total.toString()
 };
 
+const rangeOverlap = (a: [number, number], b: [number, number]): [number, number] => [Math.max(a[0], b[0]), Math.min(a[1], b[1])]
 
-const getLineNumbers = (line): number[] => R.flatten([line.x, line.y, line.z])
-
-const maxDimensionRange = (input: string) => {
-    const lineNumbers = input.split("\n").map(parseLine).map(getLineNumbers)
-    const numbers = R.sort(R.ascend(R.identity), R.flatten(lineNumbers))
-    return [numbers[0], numbers[numbers.length - 1]]
+const countWhereNoIntersections = (line: Line, rest: Line[]): number => {
+    let total = (line.x[1] - line.x[0]) * (line.y[1] - line.y[0]) * (line.z[1] - line.z[0])
+    const conflicts = []
+    for (let other of rest) {
+        const oX = rangeOverlap(line.x, other.x)
+        const oY = rangeOverlap(line.y, other.y)
+        const oZ = rangeOverlap(line.z, other.z)
+        if (oX[1] - oX[0] < 1 || oY[1] - oY[0] < 1 || oZ[1] - oZ[0] < 1) {
+            continue
+        }
+        conflicts.push(other)
+    }
+    for (let i = 0; i < conflicts.length; i++) {
+        const conflictTotal = countWhereNoIntersections(conflicts[i], conflicts.slice(i+1))
+        total -= conflictTotal
+    }
+    return total
 }
 
 const b = (input: string): string => {
-    const [min, max] = maxDimensionRange(input)
-    let cube = createCube(max - min)
-    for (let line of input.split("\n")) {
-        const {on, x, y, z} = parseLine(line)
-        for (let i = x[0]; i <= x[1]; i++) {
-            for (let j = y[0]; j <= y[1]; j++) {
-                for (let k = z[0]; k <= z[1]; k++) {
-                    cube[i+max][j+max][k+max] = on
-                }
-            }
+    const lines = input.split("\n").map(parseLine)
+    let total = BigInt(0)
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        if (!line.on) {
+            continue
         }
+
+        total += BigInt(countWhereNoIntersections(line, lines.slice(i+1)))
     }
-    return R.flatten(cube).filter(Boolean).length.toString()
+    return total.toString()
 };
 
 export default {
