@@ -84,7 +84,7 @@ const printVisited = (gridSize: number, visited: {[key: string]: boolean}) => {
 const b = (input: string): string => {
     const lines = input.split("\n")
 
-    const gridSize = 50
+    const gridSize = 1000
 
     const positions = R.repeat([gridSize/2, gridSize/2], 10)
 
@@ -114,13 +114,10 @@ const b = (input: string): string => {
                 const yDiff = positions[j-1][1] - positions[j][1]
                 if (Math.abs(xDiff) > 1 || Math.abs(yDiff) > 1) {
                     // Knot needs to move
-                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
-                        // Need to move one in xDiff dir
+                    if (Math.abs(xDiff) > 1) {
                         positions[j] = [positions[j][0] + (xDiff > 0 ? 1 : -1) , positions[j][1]]
-                    } else if (xDiff === yDiff) {
-                        positions[j] = [positions[j][0] + (xDiff > 0 ? 1 : -1) , positions[j][1] + (yDiff > 0 ? 1 : -1)]
-                    } else {
-                        // Need to move one in xDiff dir
+                    }
+                    if (Math.abs(yDiff) > 1) {
                         positions[j] = [positions[j][0], positions[j][1] + (yDiff > 0 ? 1 : -1)]
                     }
                     if (Math.abs(xDiff) === 1) {
@@ -135,7 +132,7 @@ const b = (input: string): string => {
             // printGrid(gridSize, positions)
         }
     }
-    printVisited(gridSize, tailVisited)
+    // printVisited(gridSize, tailVisited)
     return Object.values(tailVisited).length.toString()
 }
 
