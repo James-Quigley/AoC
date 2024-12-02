@@ -34,7 +34,7 @@ func main() {
 
 }
 
-func part1(data string) {
+func parseData(data string) ([]int, []int) {
 	lines := strings.Split(data, "\n")
 	left, right := make([]int, len(lines)), make([]int, len(lines))
 	for i, line := range lines {
@@ -52,6 +52,11 @@ func part1(data string) {
 	}
 	sort.Ints(left)
 	sort.Ints(right)
+	return left, right
+}
+
+func part1(data string) {
+	left, right := parseData(data)
 	total := 0
 	for i := 0; i < len(left); i++ {
 		total += int(math.Abs(float64(left[i] - right[i])))
@@ -60,23 +65,7 @@ func part1(data string) {
 }
 
 func part2(data string) {
-	lines := strings.Split(data, "\n")
-	left, right := make([]int, len(lines)), make([]int, len(lines))
-	for i, line := range lines {
-		parts := strings.Split(line, "   ")
-		l, err := strconv.Atoi(parts[0])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		r, err := strconv.Atoi(parts[1])
-		if err != nil {
-			log.Fatalln(err)
-		}
-		left[i] = l
-		right[i] = r
-	}
-	sort.Ints(left)
-	sort.Ints(right)
+	left, right := parseData(data)
 	total := 0
 	for i := 0; i < len(left); i++ {
 		count := 0
